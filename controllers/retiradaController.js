@@ -1,7 +1,6 @@
 const pool = require("../config/database");
 const { enviarParaPlanilha } = require("../services/sheetsService");
 
-
 exports.dashboard = async (req, res) => {
     const periodo = req.query.periodo || "30dias";
     const dataInicio = req.query.data_inicio || "";
@@ -97,6 +96,7 @@ exports.dashboard = async (req, res) => {
         return res.send("Erro ao carregar dashboard.");
     }
 };
+
 exports.telaNovaRetirada = (req, res) => {
     return res.render("nova-retirada", {
         erro: null,
@@ -128,7 +128,7 @@ exports.salvarRetirada = async (req, res) => {
     }
 
     try {
-        const resultado = await pool.query(
+        const [resultado] = await pool.execute(
             `
             INSERT INTO retiradas (
                 codigo_produto,
@@ -146,11 +146,7 @@ exports.salvarRetirada = async (req, res) => {
                 observacao,
                 criado_por
             )
-            VALUES (
-                $1, $2, $3, $4, $5, $6, $7,
-                $8, $9, $10, $11, $12, $13, $14
-            )
-            RETURNING *
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 codigo_produto,
@@ -170,7 +166,12 @@ exports.salvarRetirada = async (req, res) => {
             ]
         );
 
-        const retiradaCriada = resultado.rows[0];
+        const [retiradas] = await pool.execute(
+            "SELECT * FROM retiradas WHERE id = ? LIMIT 1",
+            [resultado.insertId]
+        );
+
+        const retiradaCriada = retiradas[0];
 
         await enviarParaPlanilha({
             acao: "criar_retirada",
@@ -194,7 +195,7 @@ exports.salvarRetirada = async (req, res) => {
 
         return res.redirect("/retiradas");
     } catch (erro) {
-        console.error(erro);
+        console.error("Erro ao salvar retirada:", erro);
 
         return res.render("nova-retirada", {
             erro: "Erro ao salvar retirada.",
@@ -314,23 +315,27 @@ exports.confirmarFoto = async (req, res) => {
     const id = req.params.id;
 
     try {
-        const resultado = await pool.query(
+        await pool.execute(
             `
             UPDATE retiradas
             SET 
                 status = 'Foto tirada',
-                confirmado_por = $1,
-                atualizado_por = $1,
-                data_confirmacao = CURRENT_TIMESTAMP,
-                data_atualizacao = CURRENT_TIMESTAMP
-            WHERE id = $2
+                confirmado_por = ?,
+                atualizado_por = ?,
+                data_confirmacao = NOW(),
+                data_atualizacao = NOW()
+            WHERE id = ?
               AND tipo_retirada = 'foto'
-            RETURNING *
             `,
-            [usuario.id, id]
+            [usuario.id, usuario.id, id]
         );
 
-        const retiradaAtualizada = resultado.rows[0];
+        const [retiradas] = await pool.execute(
+            "SELECT * FROM retiradas WHERE id = ? LIMIT 1",
+            [id]
+        );
+
+        const retiradaAtualizada = retiradas[0];
 
         if (retiradaAtualizada) {
             await enviarParaPlanilha({
@@ -345,7 +350,7 @@ exports.confirmarFoto = async (req, res) => {
 
         return res.redirect("/retiradas?tipo=foto");
     } catch (erro) {
-        console.error(erro);
+        console.error("Erro ao confirmar foto:", erro);
         return res.send("Erro ao confirmar foto.");
     }
 };
@@ -372,20 +377,24 @@ exports.alterarStatus = async (req, res) => {
     }
 
     try {
-        const resultado = await pool.query(
+        await pool.execute(
             `
             UPDATE retiradas
             SET 
-                status = $1,
-                atualizado_por = $2,
-                data_atualizacao = CURRENT_TIMESTAMP
-            WHERE id = $3
-            RETURNING *
+                status = ?,
+                atualizado_por = ?,
+                data_atualizacao = NOW()
+            WHERE id = ?
             `,
             [status, usuario.id, id]
         );
 
-        const retiradaAtualizada = resultado.rows[0];
+        const [retiradas] = await pool.execute(
+            "SELECT * FROM retiradas WHERE id = ? LIMIT 1",
+            [id]
+        );
+
+        const retiradaAtualizada = retiradas[0];
 
         if (retiradaAtualizada) {
             await enviarParaPlanilha({
@@ -400,7 +409,7 @@ exports.alterarStatus = async (req, res) => {
 
         return res.redirect("/retiradas");
     } catch (erro) {
-        console.error(erro);
+        console.error("Erro ao alterar status:", erro);
         return res.send("Erro ao alterar status.");
     }
 };
