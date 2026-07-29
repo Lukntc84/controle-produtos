@@ -226,65 +226,71 @@ exports.listarRetiradas = async (req, res) => {
     const params = [];
 
     if (tipo) {
+        query += " AND r.tipo_retirada = ?";
         params.push(tipo);
-        query += ` AND r.tipo_retirada = $${params.length}`;
     }
 
     if (status) {
+        query += " AND r.status = ?";
         params.push(status);
-        query += ` AND r.status = $${params.length}`;
     }
 
     if (busca) {
-        params.push(`%${busca}%`);
-
         query += `
             AND (
-                r.codigo_produto ILIKE $${params.length}
-                OR r.nome_produto ILIKE $${params.length}
-                OR r.numero_venda ILIKE $${params.length}
-                OR r.plataforma ILIKE $${params.length}
-                OR r.cor ILIKE $${params.length}
-                OR r.tamanho ILIKE $${params.length}
+                r.codigo_produto LIKE ?
+                OR r.nome_produto LIKE ?
+                OR r.numero_venda LIKE ?
+                OR r.plataforma LIKE ?
+                OR r.cor LIKE ?
+                OR r.tamanho LIKE ?
             )
         `;
+
+        const termo = `%${busca}%`;
+
+        params.push(
+            termo,
+            termo,
+            termo,
+            termo,
+            termo,
+            termo
+        );
     }
 
     if (periodo === "hoje") {
-        query += `
-            AND r.data_retirada::date = CURRENT_DATE
-        `;
+        query += " AND DATE(r.data_retirada) = CURDATE()";
     }
 
     if (periodo === "7dias") {
-        query += `
-            AND r.data_retirada >= CURRENT_DATE - INTERVAL '7 days'
-        `;
+        query += " AND r.data_retirada >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
     }
 
     if (periodo === "mes") {
         query += `
-            AND date_trunc('month', r.data_retirada) = date_trunc('month', CURRENT_DATE)
+            AND YEAR(r.data_retirada) = YEAR(CURDATE())
+            AND MONTH(r.data_retirada) = MONTH(CURDATE())
         `;
     }
 
     if (periodo === "personalizado" && dataInicio) {
+        query += " AND DATE(r.data_retirada) >= ?";
         params.push(dataInicio);
-        query += ` AND r.data_retirada::date >= $${params.length}`;
     }
 
     if (periodo === "personalizado" && dataFim) {
+        query += " AND DATE(r.data_retirada) <= ?";
         params.push(dataFim);
-        query += ` AND r.data_retirada::date <= $${params.length}`;
     }
 
     query += " ORDER BY r.data_retirada DESC";
 
     try {
-        const resultado = await pool.query(query, params);
+        const [retiradas] = await pool.execute(query, params);
 
         return res.render("retiradas", {
-            retiradas: resultado.rows,
+            retiradas,
             filtroTipo: tipo,
             filtroStatus: status,
             filtroBusca: busca,
@@ -293,7 +299,7 @@ exports.listarRetiradas = async (req, res) => {
             filtroDataFim: dataFim,
         });
     } catch (erro) {
-        console.error(erro);
+        console.error("Erro ao listar retiradas:", erro);
         return res.send("Erro ao listar retiradas.");
     }
 };
