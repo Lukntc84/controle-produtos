@@ -15,18 +15,18 @@ exports.login = async (req, res) => {
     const { email, senha } = req.body;
 
     try {
-        const resultado = await pool.query(
-            "SELECT * FROM usuarios WHERE email = $1 AND ativo = TRUE LIMIT 1",
+        const [usuarios] = await pool.execute(
+            "SELECT * FROM usuarios WHERE email = ? AND ativo = 1 LIMIT 1",
             [email]
         );
 
-        if (resultado.rows.length === 0) {
+        if (usuarios.length === 0) {
             return res.render("login", {
                 erro: "E-mail ou senha inválidos.",
             });
         }
 
-        const usuario = resultado.rows[0];
+        const usuario = usuarios[0];
 
         const senhaConfere = await bcrypt.compare(senha, usuario.senha);
 
@@ -45,7 +45,7 @@ exports.login = async (req, res) => {
 
         return res.redirect("/dashboard");
     } catch (erro) {
-        console.error(erro);
+        console.error("Erro no login:", erro);
 
         return res.render("login", {
             erro: "Erro ao tentar fazer login.",
