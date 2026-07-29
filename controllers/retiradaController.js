@@ -11,91 +11,92 @@ exports.dashboard = async (req, res) => {
     const params = [];
 
     if (periodo === "7dias") {
-        filtroData = " AND data_retirada >= CURRENT_DATE - INTERVAL '7 days'";
+        filtroData = " AND data_retirada >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
     }
 
     if (periodo === "15dias") {
-        filtroData = " AND data_retirada >= CURRENT_DATE - INTERVAL '15 days'";
+        filtroData = " AND data_retirada >= DATE_SUB(CURDATE(), INTERVAL 15 DAY)";
     }
 
     if (periodo === "30dias") {
-        filtroData = " AND data_retirada >= CURRENT_DATE - INTERVAL '30 days'";
+        filtroData = " AND data_retirada >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
     }
 
     if (periodo === "personalizado") {
         if (dataInicio) {
+            filtroData += " AND DATE(data_retirada) >= ?";
             params.push(dataInicio);
-            filtroData += ` AND data_retirada::date >= $${params.length}`;
         }
 
         if (dataFim) {
+            filtroData += " AND DATE(data_retirada) <= ?";
             params.push(dataFim);
-            filtroData += ` AND data_retirada::date <= $${params.length}`;
         }
     }
 
     try {
-        const totalRetiradas = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM retiradas WHERE 1 = 1 ${filtroData}`,
+        const [[totalRetiradas]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM retiradas WHERE 1 = 1 ${filtroData}`,
             params
         );
 
-        const totalVenda = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM retiradas WHERE tipo_retirada = 'venda' ${filtroData}`,
+        const [[totalVenda]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM retiradas WHERE tipo_retirada = 'venda' ${filtroData}`,
             params
         );
 
-        const totalFoto = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM retiradas WHERE tipo_retirada = 'foto' ${filtroData}`,
+        const [[totalFoto]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM retiradas WHERE tipo_retirada = 'foto' ${filtroData}`,
             params
         );
 
-        const aguardandoFoto = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM retiradas WHERE status = 'Aguardando foto' ${filtroData}`,
+        const [[aguardandoFoto]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM retiradas WHERE status = 'Aguardando foto' ${filtroData}`,
             params
         );
 
-        const fotoTirada = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM retiradas WHERE status = 'Foto tirada' ${filtroData}`,
+        const [[fotoTirada]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM retiradas WHERE status = 'Foto tirada' ${filtroData}`,
             params
         );
 
-        const retiradoVenda = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM retiradas WHERE status = 'Retirado para venda' ${filtroData}`,
+        const [[retiradoVenda]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM retiradas WHERE status = 'Retirado para venda' ${filtroData}`,
             params
         );
 
-        const desistencia = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM retiradas WHERE status = 'Desistência' ${filtroData}`,
+        const [[desistencia]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM retiradas WHERE status = 'Desistência' ${filtroData}`,
             params
         );
 
-        const valorVenda = await pool.query(
-            `SELECT COALESCE(SUM(valor), 0)::numeric AS total 
-             FROM retiradas 
-             WHERE tipo_retirada = 'venda' ${filtroData}`,
+        const [[valorVenda]] = await pool.execute(
+            `
+            SELECT COALESCE(SUM(valor), 0) AS total
+            FROM retiradas
+            WHERE tipo_retirada = 'venda' ${filtroData}
+            `,
             params
         );
 
         return res.render("dashboard", {
-            totalRetiradas: totalRetiradas.rows[0].total,
-            totalVenda: totalVenda.rows[0].total,
-            totalFoto: totalFoto.rows[0].total,
-            aguardandoFoto: aguardandoFoto.rows[0].total,
-            fotoTirada: fotoTirada.rows[0].total,
-            retiradoVenda: retiradoVenda.rows[0].total,
-            desistencia: desistencia.rows[0].total,
-            valorVenda: valorVenda.rows[0].total,
+            totalRetiradas: totalRetiradas.total,
+            totalVenda: totalVenda.total,
+            totalFoto: totalFoto.total,
+            aguardandoFoto: aguardandoFoto.total,
+            fotoTirada: fotoTirada.total,
+            retiradoVenda: retiradoVenda.total,
+            desistencia: desistencia.total,
+            valorVenda: valorVenda.total,
             filtroPeriodoDashboard: periodo,
             filtroDataInicioDashboard: dataInicio,
             filtroDataFimDashboard: dataFim,
         });
     } catch (erro) {
-        console.error(erro);
+        console.error("Erro ao carregar dashboard:", erro);
         return res.send("Erro ao carregar dashboard.");
     }
 };
-
 exports.telaNovaRetirada = (req, res) => {
     return res.render("nova-retirada", {
         erro: null,
