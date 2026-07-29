@@ -1,0 +1,27 @@
+<%- include("partials/header") %>
+
+<section class="login-card">
+    <h1>Entrar</h1>
+
+    <p>Acesse o controle de produtos retirados para venda ou foto.</p>
+
+    <% if (erro) { %>
+        <div class="alert alert-danger">
+            <%= erro %>
+        </div>
+    <% } %>
+
+    <form method="post" action="/login">
+        <label>E-mail</label>
+        <input type="email" name="email" required placeholder="admin@admin.com">
+
+        <label>Senha</label>
+        <input type="password" name="senha" required placeholder="Digite sua senha">
+
+        <button type="submit">Entrar</button>
+    </form>
+
+    <small>Login inicial: admin@admin.com / 123456</small>
+</section>
+
+<%- include("partials/footer") %>

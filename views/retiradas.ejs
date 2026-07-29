@@ -1,0 +1,278 @@
+<%- include("partials/header") %>
+
+<section class="dashboard-hero">
+    <div>
+        <span class="page-kicker">Controle operacional</span>
+
+        <h1>Retiradas</h1>
+
+        <p>
+            Busque, filtre e acompanhe os produtos retirados para venda ou fotografia.
+        </p>
+    </div>
+</section>
+
+<form method="get" action="/retiradas" class="filters advanced-filters">
+    <div class="filter-field filter-search">
+        <label>Busca rápida</label>
+
+        <input
+            type="text"
+            name="busca"
+            value="<%= filtroBusca || '' %>"
+            placeholder="Código, produto, venda, plataforma, cor ou tamanho"
+        >
+    </div>
+
+    <div class="filter-field">
+        <label>Tipo</label>
+
+        <select name="tipo">
+            <option value="">Todos os tipos</option>
+
+            <option value="venda" <%= filtroTipo === "venda" ? "selected" : "" %>>
+                Venda
+            </option>
+
+            <option value="foto" <%= filtroTipo === "foto" ? "selected" : "" %>>
+                Foto
+            </option>
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label>Status</label>
+
+        <select name="status">
+            <option value="">Todos os status</option>
+
+            <option value="Retirado para venda" <%= filtroStatus === "Retirado para venda" ? "selected" : "" %>>
+                Retirado para venda
+            </option>
+
+            <option value="Aguardando foto" <%= filtroStatus === "Aguardando foto" ? "selected" : "" %>>
+                Aguardando foto
+            </option>
+
+            <option value="Foto tirada" <%= filtroStatus === "Foto tirada" ? "selected" : "" %>>
+                Foto tirada
+            </option>
+
+            <option value="Desistência" <%= filtroStatus === "Desistência" ? "selected" : "" %>>
+                Desistência
+            </option>
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label>Período</label>
+
+        <select name="periodo" id="periodoFiltro">
+            <option value="">Todo período</option>
+
+            <option value="hoje" <%= filtroPeriodo === "hoje" ? "selected" : "" %>>
+                Hoje
+            </option>
+
+            <option value="7dias" <%= filtroPeriodo === "7dias" ? "selected" : "" %>>
+                Últimos 7 dias
+            </option>
+
+            <option value="mes" <%= filtroPeriodo === "mes" ? "selected" : "" %>>
+                Este mês
+            </option>
+
+            <option value="personalizado" <%= filtroPeriodo === "personalizado" ? "selected" : "" %>>
+                Personalizado
+            </option>
+        </select>
+    </div>
+
+    <div class="filter-field date-filter">
+        <label>Data inicial</label>
+
+        <input
+            type="date"
+            name="data_inicio"
+            value="<%= filtroDataInicio || '' %>"
+        >
+    </div>
+
+    <div class="filter-field date-filter">
+        <label>Data final</label>
+
+        <input
+            type="date"
+            name="data_fim"
+            value="<%= filtroDataFim || '' %>"
+        >
+    </div>
+
+    <div class="filter-actions">
+        <button type="submit">
+            Filtrar
+        </button>
+
+        <a href="/retiradas" class="btn secondary">
+            Limpar
+        </a>
+    </div>
+</form>
+
+<div class="table-card retiradas-card-list">
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Produto</th>
+                <th>Venda</th>
+                <th>Plataforma</th>
+                <th>Data/Hora</th>
+                <th>Valor</th>
+                <th>Tipo</th>
+                <th>Status</th>
+                <th>Criado por</th>
+                <th>Alterado por</th>
+
+                <% if (usuario.tipo === "admin" || usuario.tipo === "fotografia") { %>
+                    <th class="actions-column-head">Ações</th>
+                <% } %>
+            </tr>
+        </thead>
+
+        <tbody>
+            <% if (retiradas.length === 0) { %>
+                <td colspan="<%= (usuario.tipo === 'admin' || usuario.tipo === 'fotografia') ? 11 : 10 %>">
+                    Nenhuma retirada encontrada.
+                </td>
+            <% } %>
+
+            <% retiradas.forEach((retirada) => { %>
+                <tr>
+                    <td>
+                        <%= retirada.codigo_produto %>
+                    </td>
+
+                    <td>
+                        <strong><%= retirada.nome_produto %></strong><br>
+
+                        <small>
+                            Tamanho: <%= retirada.tamanho || "-" %> /
+                            Cor: <%= retirada.cor || "-" %>
+                        </small>
+                    </td>
+
+                    <td>
+                        <%= retirada.numero_venda || "-" %>
+                    </td>
+
+                    <td>
+                        <%= retirada.plataforma || "-" %>
+                    </td>
+
+                    <td>
+                        <% if (retirada.data_retirada) { %>
+                            <%= new Date(retirada.data_retirada).toLocaleString("pt-BR") %>
+                        <% } else { %>
+                            -
+                        <% } %>
+                    </td>
+
+                    <td>
+                        <% if (retirada.valor) { %>
+                            R$ <%= Number(retirada.valor).toFixed(2).replace(".", ",") %>
+                        <% } else { %>
+                            -
+                        <% } %>
+                    </td>
+
+                    <td>
+                        <span class="type-badge <%= retirada.tipo_retirada === 'foto' ? 'type-photo' : 'type-sale' %>">
+                            <%= retirada.tipo_retirada === "venda" ? "Venda" : "Foto" %>
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="status status-<%= retirada.status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll(' ', '-') %>">
+                            <%= retirada.status %>
+                        </span>
+                    </td>
+
+                    <td>
+                        <%= retirada.criado_por_nome || "-" %>
+                    </td>
+
+                    <td>
+                        <% if (retirada.atualizado_por_nome) { %>
+                            <strong><%= retirada.atualizado_por_nome %></strong><br>
+
+                            <% if (retirada.data_atualizacao) { %>
+                                <small>
+                                    <%= new Date(retirada.data_atualizacao).toLocaleString("pt-BR") %>
+                                </small>
+                            <% } %>
+                        <% } else { %>
+                            <small>Sem alteração</small>
+                        <% } %>
+                    </td>
+
+<% if (usuario.tipo === "admin" || usuario.tipo === "fotografia") { %>
+    <td class="actions-column">
+        <% if (retirada.tipo_retirada === "foto" && retirada.status === "Aguardando foto") { %>
+            <form method="post" action="/retiradas/<%= retirada.id %>/confirmar-foto">
+                <button type="submit" class="btn-action-photo">
+                    Confirmar foto
+                </button>
+            </form>
+        <% } %>
+
+        <form method="post" action="/retiradas/<%= retirada.id %>/status">
+            <select name="status">
+                <option value="Retirado para venda" <%= retirada.status === "Retirado para venda" ? "selected" : "" %>>
+                    Retirado para venda
+                </option>
+
+                <option value="Aguardando foto" <%= retirada.status === "Aguardando foto" ? "selected" : "" %>>
+                    Aguardando foto
+                </option>
+
+                <option value="Foto tirada" <%= retirada.status === "Foto tirada" ? "selected" : "" %>>
+                    Foto tirada
+                </option>
+
+                <option value="Desistência" <%= retirada.status === "Desistência" ? "selected" : "" %>>
+                    Desistência
+                </option>
+            </select>
+
+            <button type="submit">
+                Alterar
+            </button>
+        </form>
+    </td>
+<% } %>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const periodoFiltro = document.getElementById("periodoFiltro");
+    const dateFilters = document.querySelectorAll(".date-filter");
+
+    function atualizarDatas() {
+        const mostrar = periodoFiltro.value === "personalizado";
+
+        dateFilters.forEach((item) => {
+            item.style.display = mostrar ? "block" : "none";
+        });
+    }
+
+    if (periodoFiltro) {
+        periodoFiltro.addEventListener("change", atualizarDatas);
+        atualizarDatas();
+    }
+</script>
+
+<%- include("partials/footer") %>

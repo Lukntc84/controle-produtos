@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Produtos</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <strong>Controle de Produtos</strong>
+        </div>
+
+        <% if (usuario) { %>
+            <nav>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/nova-retirada">Nova retirada</a>
+                <a href="/retiradas">Retiradas</a>
+                <a href="/logout">Sair</a>
+            </nav>
+        <% } %>
+    </header>
+
+    <main class="container">

@@ -1,0 +1,100 @@
+<%- include("partials/header") %>
+
+<h1>Nova retirada</h1>
+
+<p>Preencha os dados do produto retirado para venda ou foto.</p>
+
+<% if (erro) { %>
+    <div class="alert alert-danger">
+        <%= erro %>
+    </div>
+<% } %>
+
+<form method="post" action="/nova-retirada" class="form-card">
+    <div class="grid">
+        <div>
+            <label>Código do produto</label>
+            <input
+                type="text"
+                name="codigo_produto"
+                required
+                placeholder="Ex: 123456"
+            >
+        </div>
+
+        <div>
+            <label>Nome do produto</label>
+            <input
+                type="text"
+                name="nome_produto"
+                required
+                placeholder="Ex: Calça jeans wide leg"
+            >
+        </div>
+
+        <div>
+            <label>Número da venda</label>
+            <input
+                type="text"
+                name="numero_venda"
+                placeholder="Ex: 200000123456"
+            >
+        </div>
+
+        <div>
+            <label>Plataforma</label>
+            <select name="plataforma">
+                <option value="">Selecione</option>
+                <option value="Mercado Livre">Mercado Livre</option>
+                <option value="Shopee">Shopee</option>
+                <option value="Shein">Shein</option>
+                <option value="Site">Site</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Loja Física">Loja Física</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Valor</label>
+            <input
+                type="number"
+                name="valor"
+                min="0"
+                step="0.01"
+                placeholder="Ex: 129.99"
+            >
+        </div>
+
+        <div>
+            <label>Tamanho</label>
+            <input
+                type="text"
+                name="tamanho"
+                placeholder="Ex: M, G, 38, 40"
+            >
+        </div>
+
+        <div>
+            <label>Cor</label>
+            <input
+                type="text"
+                name="cor"
+                placeholder="Ex: Preto"
+            >
+        </div>
+
+        <div>
+            <label>Tipo de retirada</label>
+            <select name="tipo_retirada" required>
+                <option value="">Selecione</option>
+                <option value="venda">Venda</option>
+                <option value="foto">Foto</option>
+            </select>
+        </div>
+    </div>
+
+    <button type="submit">Salvar retirada</button>
+</form>
+
+<%- include("partials/footer") %>

@@ -1,0 +1,5 @@
+node_modules
+.env
+teste-banco.js
+teste-planilha.js
+setup-banco.js

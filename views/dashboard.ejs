@@ -1,0 +1,143 @@
+<%- include("partials/header") %>
+
+<section class="dashboard-hero">
+    <div>
+        <span class="page-kicker">Painel de controle</span>
+
+        <h1>Dashboard</h1>
+
+        <p>
+            Bem-vindo, <strong><%= usuario.nome %></strong>.
+            Aqui está o resumo das retiradas registradas no sistema.
+        </p>
+    </div>
+
+    <div class="hero-value-card">
+        <span>Valor em venda no período</span>
+
+        <strong>
+            R$ <%= Number(valorVenda || 0).toFixed(2).replace(".", ",") %>
+        </strong>
+    </div>
+</section>
+
+<form method="get" action="/dashboard" class="filters dashboard-filters">
+    <div class="filter-field">
+        <label>Período do dashboard</label>
+
+        <select name="periodo" id="periodoDashboard">
+            <option value="7dias" <%= filtroPeriodoDashboard === "7dias" ? "selected" : "" %>>
+                Últimos 7 dias
+            </option>
+
+            <option value="15dias" <%= filtroPeriodoDashboard === "15dias" ? "selected" : "" %>>
+                Últimos 15 dias
+            </option>
+
+            <option value="30dias" <%= filtroPeriodoDashboard === "30dias" ? "selected" : "" %>>
+                Últimos 30 dias
+            </option>
+
+            <option value="personalizado" <%= filtroPeriodoDashboard === "personalizado" ? "selected" : "" %>>
+                Intervalo personalizado
+            </option>
+        </select>
+    </div>
+
+    <div class="filter-field dashboard-date-filter">
+        <label>Data inicial</label>
+
+        <input
+            type="date"
+            name="data_inicio"
+            value="<%= filtroDataInicioDashboard || '' %>"
+        >
+    </div>
+
+    <div class="filter-field dashboard-date-filter">
+        <label>Data final</label>
+
+        <input
+            type="date"
+            name="data_fim"
+            value="<%= filtroDataFimDashboard || '' %>"
+        >
+    </div>
+
+    <div class="filter-actions">
+        <button type="submit">
+            Aplicar filtro
+        </button>
+
+        <a href="/dashboard" class="btn secondary">
+            Limpar
+        </a>
+    </div>
+</form>
+
+<section class="cards">
+    <div class="card">
+        <span>Total de retiradas</span>
+        <strong><%= totalRetiradas %></strong>
+    </div>
+
+    <div class="card">
+        <span>Para venda</span>
+        <strong><%= totalVenda %></strong>
+    </div>
+
+    <div class="card">
+        <span>Para foto</span>
+        <strong><%= totalFoto %></strong>
+    </div>
+
+    <div class="card">
+        <span>Aguardando foto</span>
+        <strong><%= aguardandoFoto %></strong>
+    </div>
+
+    <div class="card">
+        <span>Foto tirada</span>
+        <strong><%= fotoTirada %></strong>
+    </div>
+
+    <div class="card">
+        <span>Retirado para venda</span>
+        <strong><%= retiradoVenda %></strong>
+    </div>
+
+    <div class="card">
+        <span>Desistência</span>
+        <strong><%= desistencia %></strong>
+    </div>
+</section>
+
+<section class="actions">
+    <a href="/nova-retirada" class="btn">
+        Nova retirada
+    </a>
+
+    <a href="/retiradas" class="btn secondary">
+        Ver retiradas
+    </a>
+</section>
+
+<script>
+    const periodoDashboard = document.getElementById("periodoDashboard");
+    const dashboardDateFilters = document.querySelectorAll(".dashboard-date-filter");
+
+    function atualizarFiltroDashboard() {
+        const mostrar = periodoDashboard.value === "personalizado";
+
+        dashboardDateFilters.forEach((item) => {
+            item.style.display = mostrar ? "block" : "none";
+        });
+    }
+
+    if (periodoDashboard) {
+        periodoDashboard.addEventListener("change", atualizarFiltroDashboard);
+        atualizarFiltroDashboard();
+    }
+</script>
+
+<%- include("partials/footer") %>
