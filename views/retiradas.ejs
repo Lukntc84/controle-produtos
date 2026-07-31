@@ -121,7 +121,7 @@
     </div>
 </form>
 
-<div class="table-card retiradas-card-list">
+<div class="retiradas-card-list">
     <table>
         <thead>
             <tr>
@@ -136,28 +136,28 @@
                 <th>Criado por</th>
                 <th>Alterado por</th>
 
-                <% if (usuario.tipo === "admin" || usuario.tipo === "fotografia") { %>
-                    <% if (podeEditar) { %>
-                        <th>Ações</th>
-                    <% } %>
+                <% if (podeEditar) { %>
+                    <th>Ações</th>
                 <% } %>
             </tr>
         </thead>
 
         <tbody>
             <% if (retiradas.length === 0) { %>
-                <td colspan="<%= (usuario.tipo === 'admin' || usuario.tipo === 'fotografia') ? 11 : 10 %>">
-                    Nenhuma retirada encontrada.
-                </td>
+                <tr>
+                    <td colspan="<%= podeEditar ? 11 : 10 %>">
+                        Nenhuma retirada encontrada.
+                    </td>
+                </tr>
             <% } %>
 
             <% retiradas.forEach((retirada) => { %>
                 <tr>
-                    <td>
+                    <td data-label="Código">
                         <%= retirada.codigo_produto %>
                     </td>
 
-                    <td>
+                    <td data-label="Produto">
                         <strong><%= retirada.nome_produto %></strong><br>
 
                         <small>
@@ -166,15 +166,15 @@
                         </small>
                     </td>
 
-                    <td>
+                    <td data-label="Venda">
                         <%= retirada.numero_venda || "-" %>
                     </td>
 
-                    <td>
+                    <td data-label="Plataforma">
                         <%= retirada.plataforma || "-" %>
                     </td>
 
-                    <td>
+                    <td data-label="Data/Hora">
                         <% if (retirada.data_retirada) { %>
                             <%= new Date(retirada.data_retirada).toLocaleString("pt-BR") %>
                         <% } else { %>
@@ -182,7 +182,7 @@
                         <% } %>
                     </td>
 
-                    <td>
+                    <td data-label="Valor">
                         <% if (retirada.valor) { %>
                             R$ <%= Number(retirada.valor).toFixed(2).replace(".", ",") %>
                         <% } else { %>
@@ -190,23 +190,23 @@
                         <% } %>
                     </td>
 
-                    <td>
+                    <td data-label="Tipo">
                         <span class="type-badge <%= retirada.tipo_retirada === 'foto' ? 'type-photo' : 'type-sale' %>">
                             <%= retirada.tipo_retirada === "venda" ? "Venda" : "Foto" %>
                         </span>
                     </td>
 
-                    <td>
+                    <td data-label="Status">
                         <span class="status status-<%= retirada.status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll(' ', '-') %>">
                             <%= retirada.status %>
                         </span>
                     </td>
 
-                    <td>
+                    <td data-label="Criado por">
                         <%= retirada.criado_por_nome || "-" %>
                     </td>
 
-                    <td>
+                    <td data-label="Alterado por">
                         <% if (retirada.atualizado_por_nome) { %>
                             <strong><%= retirada.atualizado_por_nome %></strong><br>
 
@@ -220,42 +220,41 @@
                         <% } %>
                     </td>
 
-<% if (podeEditar) { %>
-    <td data-label="Ações" class="actions-column">
-        <% if (retirada.tipo_retirada === "foto" && retirada.status === "Aguardando foto") { %>
-            <form method="post" action="/retiradas/<%= retirada.id %>/confirmar-foto">
-                <button type="submit" class="btn-action-photo">
-                    Confirmar foto
-                </button>
-            </form>
-        <% } %>
+                    <% if (podeEditar) { %>
+                        <td data-label="Ações" class="actions-column">
+                            <% if (retirada.tipo_retirada === "foto" && retirada.status === "Aguardando foto") { %>
+                                <form method="post" action="/retiradas/<%= retirada.id %>/confirmar-foto">
+                                    <button type="submit" class="btn-action-photo">
+                                        Confirmar foto
+                                    </button>
+                                </form>
+                            <% } %>
 
-        <form method="post" action="/retiradas/<%= retirada.id %>/status">
-            <select name="status">
-                <option value="Retirado para venda" <%= retirada.status === "Retirado para venda" ? "selected" : "" %>>
-                    Retirado para venda
-                </option>
+                            <form method="post" action="/retiradas/<%= retirada.id %>/status">
+                                <select name="status">
+                                    <option value="Retirado para venda" <%= retirada.status === "Retirado para venda" ? "selected" : "" %>>
+                                        Retirado para venda
+                                    </option>
 
-                <option value="Aguardando foto" <%= retirada.status === "Aguardando foto" ? "selected" : "" %>>
-                    Aguardando foto
-                </option>
+                                    <option value="Aguardando foto" <%= retirada.status === "Aguardando foto" ? "selected" : "" %>>
+                                        Aguardando foto
+                                    </option>
 
-                <option value="Foto tirada" <%= retirada.status === "Foto tirada" ? "selected" : "" %>>
-                    Foto tirada
-                </option>
+                                    <option value="Foto tirada" <%= retirada.status === "Foto tirada" ? "selected" : "" %>>
+                                        Foto tirada
+                                    </option>
 
-                <option value="Desistência" <%= retirada.status === "Desistência" ? "selected" : "" %>>
-                    Desistência
-                </option>
-            </select>
+                                    <option value="Desistência" <%= retirada.status === "Desistência" ? "selected" : "" %>>
+                                        Desistência
+                                    </option>
+                                </select>
 
-            <button type="submit">
-                Alterar
-            </button>
-        </form>
-    </td>
-<% } %>
-<% } %>
+                                <button type="submit">
+                                    Alterar
+                                </button>
+                            </form>
+                        </td>
+                    <% } %>
                 </tr>
             <% }) %>
         </tbody>
