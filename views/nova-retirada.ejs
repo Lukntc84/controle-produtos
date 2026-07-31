@@ -11,6 +11,7 @@
 <% } %>
 
 <form method="post" action="/nova-retirada" class="form-card">
+    <input type="hidden" name="form_token" value="<%= formToken %>">
     <div class="grid">
         <div>
             <label>Código do produto</label>
@@ -96,5 +97,21 @@
 
     <button type="submit">Salvar retirada</button>
 </form>
+
+<script>
+    const formNovaRetirada = document.querySelector("form[action='/nova-retirada']");
+
+    if (formNovaRetirada) {
+        formNovaRetirada.addEventListener("submit", function () {
+            const botao = formNovaRetirada.querySelector("button[type='submit']");
+
+            if (botao) {
+                botao.disabled = true;
+                botao.innerText = "Salvando...";
+                botao.classList.add("button-loading");
+            }
+        });
+    }
+</script>
 
 <%- include("partials/footer") %>

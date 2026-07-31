@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const { enviarParaPlanilha } = require("../services/sheetsService");
+const crypto = require("crypto");
 
 exports.dashboard = async (req, res) => {
     const periodo = req.query.periodo || "30dias";
@@ -98,22 +99,34 @@ exports.dashboard = async (req, res) => {
 };
 
 exports.telaNovaRetirada = (req, res) => {
+    const formToken = crypto.randomUUID();
+
+    req.session.formTokenNovaRetirada = formToken;
+
     return res.render("nova-retirada", {
         erro: null,
+        formToken,
     });
 };
 
 exports.salvarRetirada = async (req, res) => {
     const {
-        codigo_produto,
-        nome_produto,
-        numero_venda,
-        plataforma,
-        valor,
-        tamanho,
-        cor,
-        tipo_retirada,
-    } = req.body;
+    codigo_produto,
+    nome_produto,
+    numero_venda,
+    plataforma,
+    valor,
+    tamanho,
+    cor,
+    tipo_retirada,
+    form_token,
+} = req.body;
+
+if (!form_token || form_token !== req.session.formTokenNovaRetirada) {
+    return res.redirect("/retiradas");
+}
+
+delete req.session.formTokenNovaRetirada;
 
     let status = "";
 
@@ -122,8 +135,12 @@ exports.salvarRetirada = async (req, res) => {
     } else if (tipo_retirada === "foto") {
         status = "Aguardando foto";
     } else {
+        const novoToken = crypto.randomUUID();
+        req.session.formTokenNovaRetirada = novoToken;
+
         return res.render("nova-retirada", {
             erro: "Tipo de retirada inválido.",
+            formToken: novoToken,
         });
     }
 
@@ -197,8 +214,12 @@ exports.salvarRetirada = async (req, res) => {
     } catch (erro) {
         console.error("Erro ao salvar retirada:", erro);
 
+        const novoToken = crypto.randomUUID();
+        req.session.formTokenNovaRetirada = novoToken;
+
         return res.render("nova-retirada", {
             erro: "Erro ao salvar retirada.",
+            formToken: novoToken,
         });
     }
 };
