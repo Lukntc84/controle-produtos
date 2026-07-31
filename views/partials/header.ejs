@@ -13,12 +13,19 @@
         </div>
 
         <% if (usuario) { %>
-            <nav>
+        <nav>
+            <% if (usuario) { %>
                 <a href="/dashboard">Dashboard</a>
-                <a href="/nova-retirada">Nova retirada</a>
+
+                <% if (usuario.tipo !== "visualizador") { %>
+                    <a href="/nova-retirada">Nova retirada</a>
+                <% } %>
+
                 <a href="/retiradas">Retiradas</a>
+
                 <a href="/logout">Sair</a>
-            </nav>
+            <% } %>
+        </nav>
         <% } %>
     </header>
 
