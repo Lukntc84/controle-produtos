@@ -1,5 +1,7 @@
 <%- include("partials/header") %>
 
+<% const podeEditar = usuario && (usuario.tipo === "admin" || usuario.tipo === "fotografia"); %>
+
 <section class="dashboard-hero">
     <div>
         <span class="page-kicker">Controle operacional</span>
@@ -135,7 +137,9 @@
                 <th>Alterado por</th>
 
                 <% if (usuario.tipo === "admin" || usuario.tipo === "fotografia") { %>
-                    <th class="actions-column-head">Ações</th>
+                    <% if (podeEditar) { %>
+                        <th>Ações</th>
+                    <% } %>
                 <% } %>
             </tr>
         </thead>
@@ -216,8 +220,8 @@
                         <% } %>
                     </td>
 
-<% if (usuario.tipo === "admin" || usuario.tipo === "fotografia") { %>
-    <td class="actions-column">
+<% if (podeEditar) { %>
+    <td data-label="Ações" class="actions-column">
         <% if (retirada.tipo_retirada === "foto" && retirada.status === "Aguardando foto") { %>
             <form method="post" action="/retiradas/<%= retirada.id %>/confirmar-foto">
                 <button type="submit" class="btn-action-photo">
@@ -250,6 +254,7 @@
             </button>
         </form>
     </td>
+<% } %>
 <% } %>
                 </tr>
             <% }) %>

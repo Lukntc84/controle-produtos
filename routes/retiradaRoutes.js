@@ -14,6 +14,10 @@ function exigeLogin(req, res, next) {
 function podeCriarRetirada(req, res, next) {
     const usuario = req.session.usuario;
 
+    if (!usuario) {
+        return res.redirect("/");
+    }
+
     if (
         usuario.tipo !== "admin" &&
         usuario.tipo !== "fotografia" &&
@@ -25,7 +29,28 @@ function podeCriarRetirada(req, res, next) {
     next();
 }
 
-router.get("/dashboard", exigeLogin, retiradaController.dashboard);
+function podeAlterarStatus(req, res, next) {
+    const usuario = req.session.usuario;
+
+    if (!usuario) {
+        return res.redirect("/");
+    }
+
+    if (
+        usuario.tipo !== "admin" &&
+        usuario.tipo !== "fotografia"
+    ) {
+        return res.status(403).send("Você não tem permissão para alterar status.");
+    }
+
+    next();
+}
+
+router.get(
+    "/dashboard",
+    exigeLogin,
+    retiradaController.dashboard
+);
 
 router.get(
     "/nova-retirada",
@@ -50,12 +75,14 @@ router.get(
 router.post(
     "/retiradas/:id/confirmar-foto",
     exigeLogin,
+    podeAlterarStatus,
     retiradaController.confirmarFoto
 );
 
 router.post(
     "/retiradas/:id/status",
     exigeLogin,
+    podeAlterarStatus,
     retiradaController.alterarStatus
 );
 
