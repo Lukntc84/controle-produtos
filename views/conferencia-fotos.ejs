@@ -1,0 +1,344 @@
+<%- include("partials/header") %>
+
+<section class="dashboard-hero conferencia-hero">
+    <div>
+        <span class="page-kicker">Conferência</span>
+
+        <h1>Conferência de fotos</h1>
+
+        <p>
+            Selecione as peças fotografadas e confirme todas de uma vez.
+            As seleções continuam salvas mesmo após filtrar.
+        </p>
+    </div>
+
+    <div class="hero-value-card">
+        <span>Fotos pendentes</span>
+        <strong><%= totalPendente %></strong>
+    </div>
+</section>
+
+<form method="get" action="/conferencia-fotos" class="filters advanced-filters">
+    <div class="filter-field filter-search">
+        <label>Busca rápida</label>
+
+        <input
+            type="text"
+            name="busca"
+            value="<%= filtroBusca || '' %>"
+            placeholder="Código, produto, cor, tamanho, venda ou plataforma"
+        >
+    </div>
+
+    <div class="filter-field">
+        <label>Criado por</label>
+
+        <select name="criado_por">
+            <option value="">Todos</option>
+
+            <% usuariosFotografia.forEach((item) => { %>
+                <option value="<%= item.id %>" <%= String(filtroCriadoPor) === String(item.id) ? "selected" : "" %>>
+                    <%= item.nome %>
+                </option>
+            <% }) %>
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label>Data inicial</label>
+
+        <input
+            type="date"
+            name="data_inicio"
+            value="<%= filtroDataInicio || '' %>"
+        >
+    </div>
+
+    <div class="filter-field">
+        <label>Data final</label>
+
+        <input
+            type="date"
+            name="data_fim"
+            value="<%= filtroDataFim || '' %>"
+        >
+    </div>
+
+    <div class="filter-actions">
+        <button type="submit">
+            Filtrar
+        </button>
+
+        <a href="/conferencia-fotos" class="btn secondary">
+            Limpar filtros
+        </a>
+    </div>
+</form>
+
+<section class="selection-bar">
+    <div>
+        <strong id="contadorSelecionadas">0 selecionadas</strong>
+        <small>As seleções ficam salvas mesmo filtrando a tela.</small>
+    </div>
+
+    <div class="selection-actions">
+        <button type="button" id="limparSelecao" class="btn secondary">
+            Limpar seleção
+        </button>
+
+        <form method="post" action="/conferencia-fotos/desistencia" id="formDesistenciaSelecionadas">
+            <input type="hidden" name="selecionadas" id="selecionadasDesistencia">
+
+            <button type="submit" class="btn danger">
+                Marcar desistência
+            </button>
+        </form>
+
+        <form method="post" action="/conferencia-fotos/confirmar" id="formConfirmarSelecionadas">
+            <input type="hidden" name="selecionadas" id="selecionadasConfirmar">
+
+            <button type="submit" class="btn">
+                Confirmar selecionadas
+            </button>
+        </form>
+    </div>
+</section>
+
+<section class="conferencia-list">
+    <% if (retiradas.length === 0) { %>
+        <div class="empty-state">
+            <h2>Nenhuma foto pendente</h2>
+            <p>Não existem retiradas aguardando confirmação com os filtros atuais.</p>
+        </div>
+    <% } %>
+
+    <% retiradas.forEach((retirada) => { %>
+        <article class="conferencia-card" data-id="<%= retirada.id %>">
+            <label class="conferencia-check" aria-label="Selecionar retirada">
+                <input
+                    type="checkbox"
+                    class="checkbox-retirada"
+                    value="<%= retirada.id %>"
+                >
+
+                <span class="selection-pill">Selecionar</span>
+            </label>
+
+            <div class="conferencia-card-main">
+                <div>
+                    <small>Código</small>
+                    <strong><%= retirada.codigo_produto %></strong>
+                </div>
+
+                <div>
+                    <small>Produto</small>
+                    <strong><%= retirada.nome_produto %></strong>
+                </div>
+
+                <div>
+                    <small>Tamanho</small>
+                    <strong><%= retirada.tamanho || "-" %></strong>
+                </div>
+
+                <div>
+                    <small>Cor</small>
+                    <strong><%= retirada.cor || "-" %></strong>
+                </div>
+
+                <div>
+                    <small>Data/Hora</small>
+
+                    <strong>
+                        <% if (retirada.data_retirada) { %>
+                            <%= new Date(retirada.data_retirada).toLocaleString("pt-BR") %>
+                        <% } else { %>
+                            -
+                        <% } %>
+                    </strong>
+                </div>
+
+                <div>
+                    <small>Criado por</small>
+                    <strong><%= retirada.criado_por_nome || "-" %></strong>
+                </div>
+            </div>
+        </article>
+    <% }) %>
+</section>
+
+<script>
+    const STORAGE_KEY = "conferenciaFotosSelecionadas";
+    const idsConfirmadas = new URLSearchParams(window.location.search).get("confirmadas");
+
+    function carregarSelecao() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch (erro) {
+            return [];
+        }
+    }
+
+    function salvarSelecao(ids) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+    }
+
+    function removerIdsConfirmados() {
+        if (!idsConfirmadas) {
+            return;
+        }
+
+        const idsParaRemover = idsConfirmadas
+            .split(",")
+            .map((id) => Number(id.trim()))
+            .filter((id) => Number.isInteger(id));
+
+        if (idsParaRemover.length === 0) {
+            return;
+        }
+
+        const selecaoAtual = carregarSelecao();
+        const novaSelecao = selecaoAtual.filter((id) => !idsParaRemover.includes(Number(id)));
+
+        salvarSelecao(novaSelecao);
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete("confirmadas");
+        window.history.replaceState({}, "", url.toString());
+    }
+
+    function atualizarTela() {
+        const selecionadas = carregarSelecao();
+        const checkboxes = document.querySelectorAll(".checkbox-retirada");
+        const contador = document.getElementById("contadorSelecionadas");
+        const inputConfirmar = document.getElementById("selecionadasConfirmar");
+        const inputDesistencia = document.getElementById("selecionadasDesistencia");
+
+        checkboxes.forEach((checkbox) => {
+            const id = Number(checkbox.value);
+            const card = checkbox.closest(".conferencia-card");
+            const pill = card ? card.querySelector(".selection-pill") : null;
+            const marcado = selecionadas.includes(id);
+
+            checkbox.checked = marcado;
+
+            if (card) {
+                card.classList.toggle("selected", marcado);
+                card.setAttribute("aria-selected", marcado ? "true" : "false");
+            }
+
+            if (pill) {
+                pill.innerText = marcado ? "Selecionado" : "Selecionar";
+            }
+        });
+
+        if (contador) {
+            contador.innerText = selecionadas.length === 1
+                ? "1 selecionada"
+                : `${selecionadas.length} selecionadas`;
+        }
+
+        if (inputConfirmar) {
+            inputConfirmar.value = selecionadas.join(",");
+        }
+
+        if (inputDesistencia) {
+            inputDesistencia.value = selecionadas.join(",");
+        }
+    }
+
+    function alternarSelecao(id, marcado) {
+        let selecionadas = carregarSelecao();
+
+        if (marcado) {
+            if (!selecionadas.includes(id)) {
+                selecionadas.push(id);
+            }
+        } else {
+            selecionadas = selecionadas.filter((item) => item !== id);
+        }
+
+        salvarSelecao(selecionadas);
+        atualizarTela();
+    }
+
+    removerIdsConfirmados();
+    atualizarTela();
+
+    document.querySelectorAll(".conferencia-card").forEach((card) => {
+        card.addEventListener("click", (evento) => {
+            const clicouEmElementoInterativo = evento.target.closest(
+                "button, a, input, select, textarea, form"
+            );
+
+            if (clicouEmElementoInterativo) {
+                return;
+            }
+
+            const checkbox = card.querySelector(".checkbox-retirada");
+
+            if (!checkbox) {
+                return;
+            }
+
+            checkbox.checked = !checkbox.checked;
+
+            alternarSelecao(Number(checkbox.value), checkbox.checked);
+        });
+    });
+
+    document.querySelectorAll(".checkbox-retirada").forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+            alternarSelecao(Number(checkbox.value), checkbox.checked);
+        });
+    });
+
+    const limparSelecao = document.getElementById("limparSelecao");
+
+    if (limparSelecao) {
+        limparSelecao.addEventListener("click", () => {
+            salvarSelecao([]);
+            atualizarTela();
+        });
+    }
+
+    const formConfirmar = document.getElementById("formConfirmarSelecionadas");
+    const formDesistencia = document.getElementById("formDesistenciaSelecionadas");
+
+    if (formConfirmar) {
+        formConfirmar.addEventListener("submit", (evento) => {
+            const selecionadas = carregarSelecao();
+
+            if (selecionadas.length === 0) {
+                evento.preventDefault();
+                alert("Selecione pelo menos uma peça para confirmar.");
+                return;
+            }
+
+            const confirmar = confirm(`Confirmar ${selecionadas.length} peça(s) como Foto tirada?`);
+
+            if (!confirmar) {
+                evento.preventDefault();
+            }
+        });
+    }
+
+    if (formDesistencia) {
+        formDesistencia.addEventListener("submit", (evento) => {
+            const selecionadas = carregarSelecao();
+
+            if (selecionadas.length === 0) {
+                evento.preventDefault();
+                alert("Selecione pelo menos uma peça para marcar desistência.");
+                return;
+            }
+
+            const confirmar = confirm(`Marcar ${selecionadas.length} peça(s) como Desistência?`);
+
+            if (!confirmar) {
+                evento.preventDefault();
+            }
+        });
+    }
+</script>
+
+<%- include("partials/footer") %>

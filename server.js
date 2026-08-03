@@ -8,6 +8,8 @@ const retiradaRoutes = require("./routes/retiradaRoutes");
 
 const app = express();
 
+const conferenciaRoutes = require("./routes/conferenciaRoutes");
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
@@ -30,6 +32,7 @@ app.use((req, res, next) => {
 
 app.use("/", authRoutes);
 app.use("/", retiradaRoutes);
+app.use("/", conferenciaRoutes);
 
 const PORT = process.env.PORT || 3000;
 

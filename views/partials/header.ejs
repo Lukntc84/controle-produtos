@@ -23,6 +23,10 @@
 
                     <a href="/retiradas">Retiradas</a>
 
+                    <% if (usuario && (usuario.tipo === "admin" || usuario.tipo === "fotografia")) { %>
+                        <a href="/conferencia-fotos">Conferência</a>
+                    <% } %>
+
                     <a href="/logout">Sair</a>
                 <% } %>
             </nav>
